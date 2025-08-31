@@ -1,0 +1,15 @@
+.features {
+    text-align: center;
+    padding: 50px;
+  }
+  .feature-list {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .feature {
+    width: 30%;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
