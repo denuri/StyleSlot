@@ -1,0 +1,343 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.landing-container {
+  min-height: 100vh;
+  background: white;
+}
+
+.hero {
+  height: 80vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/saloon2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+  max-width: 600px;
+  padding: 0 2rem;
+}
+
+.hero-content h2 {
+  font-size: 3.5rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.cta-button {
+  background: #4ade80;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background: #22c55e;
+}
+
+.features {
+  padding: 4rem 0;
+  background: white;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.features h3 {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.features-subtitle {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.feature-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  margin-bottom: 1rem;
+}
+
+.feature-card h4 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.category {
+  display: inline-block;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.feature-card p {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.card-arrow {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+}
+
+.book-appointments {
+  padding: 4rem 0;
+  background: #f9fafb;
+}
+
+.book-appointments-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.book-appointments-text h2 {
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.book-appointments-text p {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.book-appointments-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.try-now-btn {
+  background: #4ade80;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.try-now-btn:hover {
+  background: #22c55e;
+}
+
+.learn-more-link {
+  color: #4ade80;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.learn-more-link:hover {
+  color: #22c55e;
+}
+
+.book-appointments-image img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.featured-salons {
+  padding: 4rem 0;
+  background: white;
+}
+
+.featured-salons h3 {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 3rem;
+}
+
+.salon-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.salon-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.salon-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.salon-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.salon-content {
+  padding: 1.5rem;
+}
+
+.salon-content h4 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.salon-content p {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.view-details-btn {
+  background: white;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background: #4ade80;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 1rem;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .hero-content h2 {
+    font-size: 2.5rem;
+  }
+
+  .hero-content p {
+    font-size: 1.1rem;
+  }
+
+  .features h3 {
+    font-size: 2rem;
+  }
+
+  .feature-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .book-appointments-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .book-appointments-text h2 {
+    font-size: 2rem;
+  }
+
+  .book-appointments-buttons {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .featured-salons h3 {
+    font-size: 2rem;
+  }
+
+  .salon-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

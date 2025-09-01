@@ -1,0 +1,71 @@
+<nav class="navbar">
+  <div class="navbar-content">
+    <div class="brand">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="#4ade80" />
+          <path d="M12 6L12.5 8.5L15 9L12.5 9.5L12 12L11.5 9.5L9 9L11.5 8.5L12 6Z" fill="#4ade80" />
+        </svg>
+      </div>
+      <h1>StyleSlot</h1>
+    </div>
+
+    <div class="nav-links" *ngIf="!isLoggedIn">
+      <a routerLink="/" class="nav-link">Home</a>
+      <a routerLink="/login" class="nav-link">Bookings</a>
+      <a routerLink="/login" class="nav-link">Profile</a>
+    </div>
+
+    <div class="nav-links" *ngIf="isLoggedIn">
+      <a routerLink="/dashboard" class="nav-link" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/booking" class="nav-link" routerLinkActive="active">Bookings</a>
+      <a routerLink="/staff-availability" class="nav-link" routerLinkActive="active"
+        *ngIf="userDetails?.role === 'staff' || userDetails?.role === 'admin'">My Schedule</a>
+      <a routerLink="/admin/staff-availability" class="nav-link" routerLinkActive="active"
+        *ngIf="userDetails?.role === 'admin'">Staff Schedules</a>
+      <a routerLink="/profile" class="nav-link" routerLinkActive="active">Profile</a>
+    </div>
+
+    <div class="auth-section">
+      <div class="auth-buttons" *ngIf="!isLoggedIn">
+        <button class="signin-btn" routerLink="/login">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="#4ade80" stroke-width="2" />
+            <polyline points="10,17 15,12 10,7" stroke="#4ade80" stroke-width="2" />
+            <line x1="15" y1="12" x2="3" y2="12" stroke="#4ade80" stroke-width="2" />
+          </svg>
+          Sign In
+        </button>
+        <button class="signup-btn" routerLink="/signup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="white" stroke-width="2" />
+            <circle cx="8.5" cy="7" r="4" stroke="white" stroke-width="2" />
+            <line x1="20" y1="8" x2="20" y2="14" stroke="white" stroke-width="2" />
+            <line x1="23" y1="11" x2="17" y2="11" stroke="white" stroke-width="2" />
+          </svg>
+          Sign Up
+        </button>
+      </div>
+
+      <div class="user-section" *ngIf="isLoggedIn">
+        <div class="user-avatar">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="12" fill="#4ade80" />
+            <path
+              d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+              fill="white" />
+            <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" fill="white" />
+          </svg>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="white" stroke-width="2" />
+            <polyline points="16,17 21,12 16,7" stroke="white" stroke-width="2" />
+            <line x1="21" y1="12" x2="9" y2="12" stroke="white" stroke-width="2" />
+          </svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

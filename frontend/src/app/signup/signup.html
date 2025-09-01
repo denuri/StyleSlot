@@ -1,0 +1,94 @@
+<div class="signup-container">
+  <app-navbar></app-navbar>
+
+  <div class="background-overlay">
+    <div class="signup-form-container">
+      <div class="signup-form">
+        <h2>Create Account</h2>
+        <p class="subtitle">Join StyleSlot and book your beauty appointments</p>
+
+        <form (ngSubmit)="onSubmit()" #signupForm="ngForm">
+          <div class="input-group">
+            <div class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+                  stroke="#666" stroke-width="2" />
+                <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="#666" stroke-width="2" />
+              </svg>
+            </div>
+            <input type="text" placeholder="Enter your full name" [(ngModel)]="signupData.name" name="name" required
+              minlength="2" maxlength="50">
+          </div>
+
+          <div class="input-group">
+            <div class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#666"
+                  stroke-width="2" />
+                <polyline points="22,6 12,13 2,6" stroke="#666" stroke-width="2" />
+              </svg>
+            </div>
+            <input type="email" placeholder="Enter your email" [(ngModel)]="signupData.email" name="email" required>
+          </div>
+
+          <div class="input-group">
+            <div class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+                  stroke="#666" stroke-width="2" />
+              </svg>
+            </div>
+            <input type="tel" placeholder="Enter your phone number (optional)" [(ngModel)]="signupData.phone"
+              name="phone">
+          </div>
+
+          <div class="input-group">
+            <div class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="#666" stroke-width="2" />
+                <circle cx="12" cy="16" r="1" stroke="#666" stroke-width="2" />
+                <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="#666"
+                  stroke-width="2" />
+              </svg>
+            </div>
+            <input type="password" placeholder="Enter your password" [(ngModel)]="signupData.password" name="password"
+              required minlength="6">
+          </div>
+
+          <div class="input-group">
+            <div class="input-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#666" stroke-width="2" />
+              </svg>
+            </div>
+            <select [(ngModel)]="signupData.role" name="role" class="role-select">
+              <option value="customer">Customer</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <button type="submit" class="signup-btn" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Create Account</span>
+            <span *ngIf="isLoading">Creating Account...</span>
+          </button>
+
+          <div *ngIf="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+
+          <div *ngIf="successMessage" class="success-message">
+            {{ successMessage }}
+          </div>
+        </form>
+
+        <div class="login-link">
+          <span>Already have an account?</span>
+          <a routerLink="/login" class="login-btn-link">Log In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

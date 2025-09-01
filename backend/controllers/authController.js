@@ -1,100 +1,163 @@
-const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const { generateToken } = require('../utils/generateToken');
 
-exports.registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
+const registerUser = async (req, res) => {
   try {
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ msg: 'User already exists' });
+    const { name, email, password, phone, role } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    user = new User({
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
       name,
       email,
-      password,
-      role
+      password: hashedPassword,
+      phone,
+      role: role || 'customer'
     });
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    await user.save();
-
-    const payload = { user: { id: user.id, role: user.role } };
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-              }
-        });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    if (user) {
+      res.status(201).json({
+        success: true,
+        data: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          token: generateToken(user._id)
+        }
+      });
+    } else {
+      res.status(400).json({ message: 'Invalid user data' });
+    }
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
+const loginUser = async (req, res) => {
   try {
-    let user = await User.findOne({ email });
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ msg: 'Invalid Credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid Credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const payload = { user: { id: user.id, role: user.role } };
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-};
-
-exports.getCurrentUser = async (req, res) => {
-    try {
-      const user = await User.findById(req.user.id).select('-password');
-      res.json(user);
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
-    }
-  };
-  
-// Get current logged-in user info
-exports.getCurrentUser = async (req, res) => {
-  try {
     res.json({
-      id: req.user.id,
-      role: req.user.role
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        token: generateToken(user._id)
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.phone = phone || user.phone;
+
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getMe,
+  updateProfile,
+  changePassword
+};

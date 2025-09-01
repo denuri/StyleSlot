@@ -1,4 +1,5 @@
 const express = require("express");
+const { body } = require('express-validator');
 const {
   createAppointment,
   getMyAppointments,
@@ -9,33 +10,29 @@ const {
   getAvailableSlots
 } = require("../controllers/appointmentController");
 
-console.log("getAllAppointments:", getAllAppointments);
-
-
-const { protect, authorize } = require("../middleware/authMiddleware");
+const { protect, authorize } = require("../middlewares/auth");
+const validate = require("../middlewares/validate");
 
 const router = express.Router();
 
-// Customer creates appointment
-router.post("/", protect, authorize("customer"), createAppointment);
+const appointmentValidation = [
+  body('staff').isMongoId().withMessage('Valid staff ID is required'),
+  body('service').isMongoId().withMessage('Valid service ID is required'),
+  body('date').isISO8601().withMessage('Valid date is required'),
+  body('notes').optional().isLength({ max: 500 }).withMessage('Notes cannot exceed 500 characters')
+];
 
-// Customer views their own appointments
+const rescheduleValidation = [
+  body('newDate').isISO8601().withMessage('Valid new date is required')
+];
+
+router.get("/available/:staffId", getAvailableSlots);
 router.get("/my", protect, authorize("customer"), getMyAppointments);
-
-// Staff views their assigned appointments
 router.get("/staff", protect, authorize("staff"), getStaffAppointments);
-
-// Admin views all appointments
-router.get("/", protect, authorize("admin"), getAllAppointments);
-
-// Cancel appointment
+router.get("/all", protect, authorize("admin"), getAllAppointments);
+router.post("/", protect, authorize("customer"), appointmentValidation, validate, createAppointment);
 router.put("/:id/cancel", protect, cancelAppointment);
-
-// Reschedule appointment
-router.put("/:id/reschedule", protect, rescheduleAppointment);
-
-// Get available slots for a staff member
-router.get("/available/:staffId", protect, getAvailableSlots);
+router.put("/:id/reschedule", protect, rescheduleValidation, validate, rescheduleAppointment);
 
 module.exports = router;
 

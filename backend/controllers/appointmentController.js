@@ -3,31 +3,46 @@ const StaffAvailability = require("../models/StaffAvailability");
 const Service = require("../models/Service");
 const moment = require("moment");
 
-// Create Appointment (with availability + duration check)
 exports.createAppointment = async (req, res) => {
   try {
-    const { staff, service, date } = req.body;
+    const { staff, service, date, notes } = req.body;
     const appointmentDate = new Date(date);
 
-    // Get service info
-    const serviceData = await Service.findById(service);
-    if (!serviceData) {
-      return res.status(400).json({ message: "Invalid service" });
+    if (!staff || !service || !date) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Staff, service, and date are required" 
+      });
     }
 
-    const duration = serviceData.duration; // minutes
+    if (appointmentDate <= new Date()) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Appointment date must be in the future" 
+      });
+    }
 
-    // Get day of week
+    const serviceData = await Service.findById(service);
+    if (!serviceData) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid service" 
+      });
+    }
+
+    const duration = serviceData.duration;
+
     const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
     const dayOfWeek = days[appointmentDate.getUTCDay()];
 
-    // Find staff availability
     const availability = await StaffAvailability.findOne({ staff, dayOfWeek });
     if (!availability) {
-      return res.status(400).json({ message: "Staff not available on this day" });
+      return res.status(400).json({ 
+        success: false,
+        message: "Staff not available on this day" 
+      });
     }
 
-    // Check working hours
     const startTime = moment(appointmentDate);
     const endTime = startTime.clone().add(duration, "minutes");
 
@@ -35,65 +50,113 @@ exports.createAppointment = async (req, res) => {
     const workEnd = moment(`${appointmentDate.toISOString().split("T")[0]} ${availability.endTime}`, "YYYY-MM-DD HH:mm");
 
     if (!(startTime.isSameOrAfter(workStart) && endTime.isSameOrBefore(workEnd))) {
-      return res.status(400).json({ message: "Selected time is outside working hours" });
+      return res.status(400).json({ 
+        success: false,
+        message: "Selected time is outside working hours" 
+      });
     }
 
-    // Check breaks
     if (availability.breaks && availability.breaks.length > 0) {
       for (let br of availability.breaks) {
         const breakStart = moment(`${appointmentDate.toISOString().split("T")[0]} ${br.start}`, "YYYY-MM-DD HH:mm");
         const breakEnd = moment(`${appointmentDate.toISOString().split("T")[0]} ${br.end}`, "YYYY-MM-DD HH:mm");
 
         if (startTime.isBefore(breakEnd) && endTime.isAfter(breakStart)) {
-          return res.status(400).json({ message: "Selected time overlaps with staff break" });
+          return res.status(400).json({ 
+            success: false,
+            message: "Selected time overlaps with staff break" 
+          });
         }
       }
     }
 
-    // Check for overlapping appointments
-    const conflict = await Appointment.findOne({
+    const existingAppointments = await Appointment.find({
       staff,
-      status: "booked",
-      $or: [
-        { date: { $lte: endTime.toDate() }, },
-        { date: { $gte: startTime.toDate() } }
-      ]
+      status: { $in: ["pending", "confirmed"] },
+      date: { $gte: startTime.toDate(), $lt: endTime.toDate() }
     });
 
-    if (conflict) {
-      return res.status(400).json({ message: "This slot is already booked" });
+    if (existingAppointments.length > 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: "This slot is already booked" 
+      });
     }
 
-    // Create appointment
     const appointment = await Appointment.create({
       customer: req.user.id,
       staff,
       service,
-      date: appointmentDate
+      date: appointmentDate,
+      startTime: startTime.format("HH:mm"),
+      endTime: endTime.format("HH:mm"),
+      totalPrice: serviceData.price,
+      notes: notes || ""
     });
 
-    // Get available slots for a given staff and date (configurable by service duration)
+    await appointment.populate([
+      { path: 'customer', select: 'name email' },
+      { path: 'staff', select: 'name email' },
+      { path: 'service', select: 'name duration price' }
+    ]);
+
+    res.status(201).json({
+      success: true,
+      data: appointment
+    });
+  } catch (error) {
+    console.error('Create appointment error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
 exports.getAvailableSlots = async (req, res) => {
   try {
     const { staffId } = req.params;
     const { date, serviceId } = req.query;
 
-    if (!date || !serviceId) return res.status(400).json({ message: "Date and serviceId are required" });
+    if (!date || !serviceId) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Date and serviceId are required" 
+      });
+    }
 
     const bookingDate = moment(date, "YYYY-MM-DD");
-    if (!bookingDate.isValid()) return res.status(400).json({ message: "Invalid date format" });
+    if (!bookingDate.isValid()) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid date format. Use YYYY-MM-DD" 
+      });
+    }
+
+    if (bookingDate.isSameOrBefore(moment(), 'day')) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Date must be in the future" 
+      });
+    }
 
     const serviceData = await Service.findById(serviceId);
-    if (!serviceData) return res.status(400).json({ message: "Invalid service" });
+    if (!serviceData) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid service" 
+      });
+    }
 
     const duration = serviceData.duration;
-
     const dayOfWeek = bookingDate.format("dddd");
 
-    // Staff availability
     const availability = await StaffAvailability.findOne({ staff: staffId, dayOfWeek });
     if (!availability) {
-      return res.status(404).json({ message: "Staff not available on this day" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Staff not available on this day" 
+      });
     }
 
     const start = moment(`${date} ${availability.startTime}`, "YYYY-MM-DD HH:mm");
@@ -102,16 +165,14 @@ exports.getAvailableSlots = async (req, res) => {
     let slots = [];
     let current = start.clone();
 
-    while (current.add(0, "minutes") < end) {
+    while (current.isBefore(end)) {
       const slotStart = current.clone();
       const slotEnd = slotStart.clone().add(duration, "minutes");
 
-      // Stop if slot goes past working hours
-      if (slotEnd > end) break;
+      if (slotEnd.isAfter(end)) break;
 
-      // Check breaks
       let inBreak = false;
-      if (availability.breaks) {
+      if (availability.breaks && availability.breaks.length > 0) {
         for (let br of availability.breaks) {
           const breakStart = moment(`${date} ${br.start}`, "YYYY-MM-DD HH:mm");
           const breakEnd = moment(`${date} ${br.end}`, "YYYY-MM-DD HH:mm");
@@ -122,15 +183,19 @@ exports.getAvailableSlots = async (req, res) => {
         }
       }
 
-      if (!inBreak) slots.push(slotStart.format("HH:mm"));
+      if (!inBreak) {
+        slots.push({
+          time: slotStart.format("HH:mm"),
+          endTime: slotEnd.format("HH:mm")
+        });
+      }
 
-      current.add(30, "minutes"); // slot stepping interval (could also = duration)
+      current.add(30, "minutes");
     }
 
-    // Filter out already booked slots
     const bookedAppointments = await Appointment.find({
       staff: staffId,
-      status: "booked",
+      status: { $in: ["pending", "confirmed"] },
       date: { $gte: start.toDate(), $lt: end.toDate() }
     }).populate("service");
 
@@ -141,20 +206,221 @@ exports.getAvailableSlots = async (req, res) => {
     });
 
     slots = slots.filter(slot => {
-      const slotStart = moment(`${date} ${slot}`, "YYYY-MM-DD HH:mm");
-      const slotEnd = slotStart.clone().add(duration, "minutes");
+      const slotStart = moment(`${date} ${slot.time}`, "YYYY-MM-DD HH:mm");
+      const slotEnd = moment(`${date} ${slot.endTime}`, "YYYY-MM-DD HH:mm");
 
-      return !bookedTimes.some(bt => slotStart.isBefore(bt.end) && slotEnd.isAfter(bt.start));
+      return !bookedTimes.some(bt => 
+        slotStart.isBefore(bt.end) && slotEnd.isAfter(bt.start)
+      );
     });
 
-    res.json({ staffId, date, serviceId, availableSlots: slots });
+    res.json({
+      success: true,
+      data: {
+        staffId,
+        date,
+        serviceId,
+        serviceName: serviceData.name,
+        duration,
+        availableSlots: slots.map(slot => slot.time)
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get available slots error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
-    res.status(201).json(appointment);
+exports.getMyAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ customer: req.user.id })
+      .populate([
+        { path: 'staff', select: 'name email' },
+        { path: 'service', select: 'name duration price' }
+      ])
+      .sort({ date: 1 });
+
+    res.json({
+      success: true,
+      count: appointments.length,
+      data: appointments
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get my appointments error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+exports.getStaffAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ staff: req.user.id })
+      .populate([
+        { path: 'customer', select: 'name email phone' },
+        { path: 'service', select: 'name duration price' }
+      ])
+      .sort({ date: 1 });
+
+    res.json({
+      success: true,
+      count: appointments.length,
+      data: appointments
+    });
+  } catch (error) {
+    console.error('Get staff appointments error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const { status, date, staff, customer } = req.query;
+    
+    let filter = {};
+    
+    if (status) filter.status = status;
+    if (date) {
+      const startOfDay = moment(date).startOf('day');
+      const endOfDay = moment(date).endOf('day');
+      filter.date = { $gte: startOfDay.toDate(), $lte: endOfDay.toDate() };
+    }
+    if (staff) filter.staff = staff;
+    if (customer) filter.customer = customer;
+
+    const appointments = await Appointment.find(filter)
+      .populate([
+        { path: 'customer', select: 'name email phone' },
+        { path: 'staff', select: 'name email' },
+        { path: 'service', select: 'name duration price' }
+      ])
+      .sort({ date: 1 });
+
+    res.json({
+      success: true,
+      count: appointments.length,
+      data: appointments
+    });
+  } catch (error) {
+    console.error('Get all appointments error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+exports.cancelAppointment = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Appointment not found" 
+      });
+    }
+
+    if (req.user.role !== "admin" && 
+        appointment.customer.toString() !== req.user.id && 
+        appointment.staff.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Not authorized to cancel this appointment" 
+      });
+    }
+
+    if (appointment.status === "cancelled" || appointment.status === "completed") {
+      return res.status(400).json({ 
+        success: false,
+        message: "Appointment cannot be cancelled" 
+      });
+    }
+
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: "Appointment cancelled successfully",
+      data: appointment
+    });
+  } catch (error) {
+    console.error('Cancel appointment error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+exports.rescheduleAppointment = async (req, res) => {
+  try {
+    const { newDate } = req.body;
+    
+    if (!newDate) {
+      return res.status(400).json({ 
+        success: false,
+        message: "New date is required" 
+      });
+    }
+
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Appointment not found" 
+      });
+    }
+    
+    if (req.user.role !== "admin" && 
+        appointment.customer.toString() !== req.user.id && 
+        appointment.staff.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Not authorized to reschedule this appointment" 
+      });
+    }
+
+
+    if (appointment.status === "cancelled" || appointment.status === "completed") {
+      return res.status(400).json({ 
+        success: false,
+        message: "Appointment cannot be rescheduled" 
+      });
+    }
+
+    const newAppointmentDate = new Date(newDate);
+    
+
+    if (newAppointmentDate <= new Date()) {
+      return res.status(400).json({ 
+        success: false,
+        message: "New appointment date must be in the future" 
+      });
+    }
+
+    appointment.date = newAppointmentDate;
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: "Appointment rescheduled successfully",
+      data: appointment
+    });
+  } catch (error) {
+    console.error('Reschedule appointment error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };

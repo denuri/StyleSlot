@@ -12,19 +12,29 @@ const staffAvailabilitySchema = new mongoose.Schema({
     required: true
   },
   startTime: {
-    type: String, // Example: "09:00"
-    required: true
+    type: String,
+    required: true,
+    match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please provide time in HH:MM format"]
   },
   endTime: {
-    type: String, // Example: "17:00"
-    required: true
+    type: String, 
+    required: true,
+    match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please provide time in HH:MM format"]
   },
   breaks: [
     {
-      start: String, // "12:00"
-      end: String    // "13:00"
+      start: {
+        type: String,
+        match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please provide time in HH:MM format"]
+      }, 
+      end: {
+        type: String,
+        match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please provide time in HH:MM format"]
+      }    
     }
   ]
 }, { timestamps: true });
+
+staffAvailabilitySchema.index({ staff: 1, dayOfWeek: 1 }, { unique: true });
 
 module.exports = mongoose.model("StaffAvailability", staffAvailabilitySchema);
